@@ -3,6 +3,7 @@ import 'package:aula04/login.dart';
 import 'package:aula04/screens/abastecida.dart';
 import 'package:aula04/screens/cadastro.dart';
 import 'package:aula04/screens/meuCarro.dart';
+import 'package:aula04/screens/perfil.dart';
 import 'package:flutter/material.dart';
 import '../controllers/carroController.dart';
 import '../models/carro.dart';
@@ -59,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ListTile(
               title: Text('Perfil'),
-              onTap: () => Navigator.pushNamed(context, '/perfil'),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Perfil())),
             ),
             ListTile(
               title: Text('Sair'),

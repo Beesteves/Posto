@@ -89,7 +89,7 @@ class AutenticacaoFirebase {
         null; // Retorna true se o usuário estiver logado, caso contrário, false
   }
 
-  Future<void> salvarDadosDoUsuario(Map<String, dynamic> dados) async {
+  static Future<void> salvarDadosDoUsuario(Map<String, dynamic> dados) async {
    try {
       User? usuario = FirebaseAuth.instance.currentUser; // Usuário autenticado
 
@@ -135,12 +135,32 @@ class AutenticacaoFirebase {
     }
   }
 
-  void atualizarPerfil(String novoNome) async {
-    await salvarDadosDoUsuario({
-      "nome": novoNome, // Atualiza apenas o campo 'nome'
+  static void atualizarPerfil(String novoNome, String telefone) async {
+    await salvarDados({
+      "displayName": novoNome,
+      "phoneNumber": telefone
     });
 
     print("Perfil atualizado!");
+  }
+
+  static Future<void> salvarDados(Map<String, dynamic> dados) async {
+   try {
+      User? usuario = FirebaseAuth.instance.currentUser; // Usuário autenticado
+
+      if (usuario != null) {
+        String uid = usuario.uid; // UID único do usuário
+        await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .update(dados); // Salva os dados
+        print("Dados salvos com sucesso!");
+      } else {
+        print("Usuário não autenticado.");
+      }
+    } catch (e) {
+      print("Erro ao salvar dados: $e");
+    }
   }
 
 }

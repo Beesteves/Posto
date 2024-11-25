@@ -54,9 +54,10 @@ class _LoginScreenState extends State<LoginScreen> {
     // Chama o método de registro e recebe a mensagem de resultado
     String message = await auth.registerWithEmailPassword(email, password);
 
-    await auth.salvarDadosDoUsuario({
+    await AutenticacaoFirebase.salvarDadosDoUsuario({
+      "displayName": "",
       "email": email,
-      "dataCriacao": DateTime.now(),
+      "phoneNumber": "",
     });
 
     // Exibe um Snackbar com a mensagem de resultado

@@ -1,7 +1,3 @@
-import 'package:aula04/autenticacaoFirebase.dart';
-import 'package:aula04/login.dart';
-import 'package:aula04/screens/abastecida.dart';
-import 'package:aula04/screens/cadastro.dart';
 import 'package:flutter/material.dart';
 import '../controllers/carroController.dart';
 import '../models/carro.dart';
@@ -17,7 +13,7 @@ class Meucarro extends StatelessWidget {
       appBar: AppBar(title: Text('Meus Veículos')),
       body: Center(
         child: StreamBuilder<List<Carro>>(
-          stream: DaoCarro.getTodosOsCarros(),
+          stream: DaoCarro.getCarro(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const CircularProgressIndicator();
