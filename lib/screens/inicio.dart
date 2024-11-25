@@ -1,5 +1,8 @@
+import 'package:aula04/autenticacaoFirebase.dart';
+import 'package:aula04/login.dart';
 import 'package:aula04/screens/abastecida.dart';
 import 'package:aula04/screens/cadastro.dart';
+import 'package:aula04/screens/meuCarro.dart';
 import 'package:flutter/material.dart';
 import '../controllers/carroController.dart';
 import '../models/carro.dart';
@@ -34,13 +37,17 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-      appBar: AppBar(title: Text('Meus Veículos')),
+      appBar: AppBar(title: Text('Veículos Cadastrados')),
       drawer: Drawer(
         child: ListView(
           children: [
             ListTile(
               title: Text('Inicio'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const MyApp())),
+            ),
+            ListTile(
+              title: Text('Meus veiculos'),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Meucarro())),
             ),
             ListTile(
               title: Text('Adicionar Veículo'),
@@ -54,12 +61,20 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text('Perfil'),
               onTap: () => Navigator.pushNamed(context, '/perfil'),
             ),
+            ListTile(
+              title: Text('Sair'),
+              onTap: () {
+                AutenticacaoFirebase aut = AutenticacaoFirebase();
+                aut.signOut();
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));
+              },
+            ),
           ],
         ),
       ),
       body: Center(
         child: StreamBuilder<List<Carro>>(
-          stream: DaoCarro.getCarro(),
+          stream: DaoCarro.getTodosOsCarros(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const CircularProgressIndicator();

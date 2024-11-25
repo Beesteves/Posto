@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import '../models/carro.dart';
@@ -12,63 +13,131 @@ class DaoCarro {
     );
   }
 
-  static void salvarAutoID(Carro c) {
-    db.collection("carro").add(c.toMap).then((docRef) {
-      print("Documento salvo com ID: ${docRef.id}");
-    }).catchError((error) {
-      print("Erro ao salvar documento: $error");
-    });
+  static String? _getUid() {
+    final User? usuario = FirebaseAuth.instance.currentUser;
+    return usuario?.uid;
   }
 
-  static Stream<List<Carro>> getCarro() {    
-    return FirebaseFirestore.instance.collection('carro').snapshots().map((QuerySnapshot) {
-      print("Carros carregados: ${QuerySnapshot.docs.map((doc) => doc.data())}");
-      return QuerySnapshot.docs.map((doc) {
+  static Future<void> salvarAutoID(Carro c) async {
+    try {
+      // Obtém o usuário autenticado
+      User? usuario = FirebaseAuth.instance.currentUser;
+      if (usuario == null) {
+        throw Exception("Usuário não autenticado.");
+      }
+
+      String uid = usuario.uid;
+
+      // Referência para a subcoleção 'carros' dentro do documento do usuário
+      CollectionReference carrosRef = db.collection('users').doc(uid).collection('carros');
+
+      // Salva os dados do carro na subcoleção
+      DocumentReference docRef = await carrosRef.add(c.toMap);
+
+      print("Carro salvo com sucesso com ID: ${docRef.id}");
+    } catch (error) {
+      print("Erro ao salvar carro: $error");
+    }
+  }
+
+  static Stream<List<Carro>> getCarro() {
+    String? uid = _getUid();
+    if (uid == null) {
+      throw Exception("Usuário não autenticado.");
+    }
+
+    return db
+        .collection('users')
+        .doc(uid)
+        .collection('carros')
+        .snapshots()
+        .map((QuerySnapshot querySnapshot) {
+      return querySnapshot.docs.map((doc) {
         return Carro.fromMap(doc.data() as Map<String, dynamic>)
           ..id = doc.id; // Atribui o ID do documento ao objeto Carro
-        }).toList();
-      },
-    );
-  }
-
-  static void remover(int _counter) {
-    db.collection("carro").doc("carro$_counter").delete().then((_) {
-      print("Documento removido com sucesso!");
-    }).catchError((error) {
-      print("Erro ao remover documento: $error");
+      }).toList();
     });
   }
 
-  static void editar(Carro c, int _counter) {
-    db.collection("carro").doc("carro$_counter").update(c.toMap).then((_) {
-      print("Documento atualizado com sucesso!");
-    }).catchError((error) {
-      print("Erro ao atualizar documento: $error");
-    });
-  }
+  static Future<void> remover(String idCarro) async {
+    String? uid = _getUid();
+    if (uid == null) {
+      throw Exception("Usuário não autenticado.");
+    }
 
-  static Future<Carro?> buscarPorID(String id) async {
     try {
-      DocumentSnapshot<Map<String, dynamic>> doc = 
-        await db.collection("carro").doc(id).get();
+      await db
+          .collection('users')
+          .doc(uid)
+          .collection('carros')
+          .doc(idCarro)
+          .delete();
+      print("Carro com ID $idCarro removido com sucesso!");
+    } catch (e) {
+      print("Erro ao remover carro: $e");
+    }
+  }
+
+  static Future<void> editar(Carro c) async {
+    String? uid = _getUid();
+    if (uid == null) {
+      throw Exception("Usuário não autenticado.");
+    }
+
+    try {
+      await db
+          .collection('users')
+          .doc(uid)
+          .collection('carros')
+          .doc(c.id)
+          .update(c.toMap);
+      print("Carro com ID ${c.id} atualizado com sucesso!");
+    } catch (e) {
+      print("Erro ao atualizar carro: $e");
+    }
+  }
+
+  static Future<Carro?> buscarPorID(String idCarro) async {
+    String? uid = _getUid();
+    if (uid == null) {
+      throw Exception("Usuário não autenticado.");
+    }
+
+    try {
+      DocumentSnapshot<Map<String, dynamic>> doc = await db
+          .collection('users')
+          .doc(uid)
+          .collection('carros')
+          .doc(idCarro)
+          .get();
 
       if (doc.exists) {
         return Carro.fromMap(doc.data()!..["id"] = doc.id);
       } else {
-        print("Documento com ID $id não encontrado.");
+        print("Carro com ID $idCarro não encontrado.");
         return null;
       }
     } catch (e) {
-      print("Erro ao buscar documento: $e");
+      print("Erro ao buscar carro: $e");
       return null;
     }
   }
 
+  
   static Future<void> atualizarUltimoKmEConsumo(String idCarro, int ultimoKm, double consumo) async {
+    String? uid = _getUid();
+    if (uid == null) {
+      throw Exception("Usuário não autenticado.");
+    }
     try {
-      await db.collection("carro").doc(idCarro).update({
-        "ultimoKm": ultimoKm,
-        "consumo": consumo,
+      await db
+        .collection('users')
+        .doc(uid)
+        .collection('carros')
+        .doc(idCarro)
+        .update({
+          "ultimoKm": ultimoKm,
+          "consumo": consumo,
       });
       print("Campos 'ultimoKm' e 'consumo' atualizados com sucesso!");
     } catch (e) {
@@ -76,4 +145,17 @@ class DaoCarro {
     }
   }
 
+  static Stream<List<Carro>> getTodosOsCarros() {
+  return FirebaseFirestore.instance
+      .collectionGroup('carros') 
+      .snapshots()
+      .map((QuerySnapshot querySnapshot) {
+    return querySnapshot.docs.map((doc) {
+      return Carro.fromMap(doc.data() as Map<String, dynamic>)
+        ..id = doc.id; 
+    }).toList();
+  });
+}
+
+  
 }

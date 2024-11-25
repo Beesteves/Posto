@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -87,4 +88,59 @@ class AutenticacaoFirebase {
     return user !=
         null; // Retorna true se o usuário estiver logado, caso contrário, false
   }
+
+  Future<void> salvarDadosDoUsuario(Map<String, dynamic> dados) async {
+   try {
+      User? usuario = FirebaseAuth.instance.currentUser; // Usuário autenticado
+
+      if (usuario != null) {
+        String uid = usuario.uid; // UID único do usuário
+        await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .set(dados, SetOptions(merge: true)); // Salva os dados
+        print("Dados salvos com sucesso!");
+      } else {
+        print("Usuário não autenticado.");
+      }
+    } catch (e) {
+      print("Erro ao salvar dados: $e");
+    }
+  }
+
+  Future<Map<String, dynamic>?> buscarDadosDoUsuario() async {
+    try {
+      User? usuario = FirebaseAuth.instance.currentUser;
+
+      if (usuario != null) {
+        String uid = usuario.uid;
+        DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+
+        if (doc.exists) {
+          return doc.data() as Map<String, dynamic>;
+        } else {
+          print("Documento não encontrado.");
+          return null;
+        }
+      } else {
+        print("Usuário não autenticado.");
+        return null;
+      }
+    } catch (e) {
+      print("Erro ao buscar dados: $e");
+      return null;
+    }
+  }
+
+  void atualizarPerfil(String novoNome) async {
+    await salvarDadosDoUsuario({
+      "nome": novoNome, // Atualiza apenas o campo 'nome'
+    });
+
+    print("Perfil atualizado!");
+  }
+
 }

@@ -54,6 +54,11 @@ class _LoginScreenState extends State<LoginScreen> {
     // Chama o método de registro e recebe a mensagem de resultado
     String message = await auth.registerWithEmailPassword(email, password);
 
+    await auth.salvarDadosDoUsuario({
+      "email": email,
+      "dataCriacao": DateTime.now(),
+    });
+
     // Exibe um Snackbar com a mensagem de resultado
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
