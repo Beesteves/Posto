@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import '../controllers/carroController.dart';
 import '../models/carro.dart';
-
+import 'editaCarro.dart';
 
 class Meucarro extends StatelessWidget {
   const Meucarro({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(title: Text('Meus Veículos')),
+      appBar: AppBar(title: const Text('Meus Veículos')),
       body: Center(
         child: StreamBuilder<List<Carro>>(
           stream: DaoCarro.getCarro(),
@@ -26,10 +25,26 @@ class Meucarro extends StatelessWidget {
               return ListView.builder(
                 itemCount: carros.length,
                 itemBuilder: (context, index) {
-                final carro = carros[index];
+                  final carro = carros[index];
                   return ListTile(
                     title: Text(carro.nome),
-                    subtitle: Text('Modelo: ${carro.modelo} ${carro.ano}\nPlaca: ${carro.placa}\nConsumo médio: ${carro.consumo}'),
+                    subtitle: Text(
+                      'Modelo: ${carro.modelo} ${carro.ano}\n'
+                      'Placa: ${carro.placa}\n'
+                      'Consumo médio: ${carro.consumo}',
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        // Navegar para a tela de edição
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditarCarro(carro: carro),
+                          ),
+                        );
+                      },
+                    ),
                   );
                 },
               );
