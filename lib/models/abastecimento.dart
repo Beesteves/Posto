@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Abastecimento{
     String? id;
     String ?carro;
@@ -32,7 +34,7 @@ class Abastecimento{
         carro: map['carro'] as String?,
         litros: map['litros'] as double,
         km: map['km'] as int,
-        data: map['data'] as DateTime,
+        data: (map['data'] as Timestamp).toDate(),
       );
     }
 

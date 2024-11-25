@@ -20,11 +20,13 @@ class _AbastecidaState extends State<Abastecida> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cadastro de Abastecimento')),
-      body: SingleChildScrollView( 
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Dropdown para selecionar o carro
               StreamBuilder<List<Carro>>(
                 stream: DaoCarro.getCarro(),
                 builder: (context, snapshot) {
@@ -42,7 +44,9 @@ class _AbastecidaState extends State<Abastecida> {
 
                   final carros = snapshot.data!;
 
-                  if (carroSelecionado != null && !snapshot.data!.any((carro) => carro.id == carroSelecionado!.id)) {
+                  // Reseta o carro selecionado se ele não estiver na lista atual
+                  if (carroSelecionado != null &&
+                      !snapshot.data!.any((carro) => carro.id == carroSelecionado!.id)) {
                     carroSelecionado = null;
                   }
 
@@ -55,7 +59,6 @@ class _AbastecidaState extends State<Abastecida> {
                         child: Text(carro.nome),
                       );
                     }).toList(),
-
                     onChanged: (novoCarro) {
                       setState(() {
                         carroSelecionado = novoCarro;
@@ -64,6 +67,7 @@ class _AbastecidaState extends State<Abastecida> {
                   );
                 },
               ),
+              // Campos de entrada para abastecimento
               TextField(
                 decoration: const InputDecoration(hintText: 'Litros abastecidos'),
                 controller: litrosController,
@@ -74,12 +78,8 @@ class _AbastecidaState extends State<Abastecida> {
                 controller: kmController,
                 keyboardType: TextInputType.number,
               ),
-              // TextField(
-              //   decoration: const InputDecoration(hintText: 'Data do abastecimento'),
-              //   controller: dataController,
-              //   keyboardType: TextInputType.datetime,
-              // ),
               const SizedBox(height: 20),
+              // Botão para salvar o abastecimento
               ElevatedButton(
                 onPressed: () {
                   if (carroSelecionado == null) {
@@ -91,16 +91,21 @@ class _AbastecidaState extends State<Abastecida> {
 
                   try {
                     Abastecimento novoAbastecimento = Abastecimento(
-                      carro: carroSelecionado!.id, 
+                      carro: carroSelecionado!.id,
                       litros: double.parse(litrosController.text),
                       km: int.parse(kmController.text),
-                      data: DateTime.now(),//parse(dataController.text),
+                      data: DateTime.now(), // Use a data atual
                     );
 
                     DaoAbastecimento.salvarAutoID(novoAbastecimento);
                     DaoAbastecimento.calculaConsumo(novoAbastecimento);
 
-                    Navigator.pop(context);
+                    // Limpa os campos após salvar
+                    litrosController.clear();
+                    kmController.clear();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Abastecimento salvo com sucesso!")),
+                    );
                   } catch (e) {
                     print("Erro ao salvar abastecimento: $e");
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -110,6 +115,48 @@ class _AbastecidaState extends State<Abastecida> {
                 },
                 child: const Text('Salvar'),
               ),
+              const SizedBox(height: 20),
+              const Text(
+                "Histórico de Abastecimentos",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              // Histórico de abastecimentos
+              if (carroSelecionado != null)
+                StreamBuilder<List<Abastecimento>>(
+                  stream: DaoAbastecimento.getAbastecimentos(carroSelecionado!.id!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+
+                    if (snapshot.hasError) {
+                      return Text("Erro ao carregar histórico: ${snapshot.error}");
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text("Nenhum abastecimento registrado para este carro.");
+                    }
+
+                    final abastecimentos = snapshot.data!;
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: abastecimentos.length,
+                      itemBuilder: (context, index) {
+                        final abastecimento = abastecimentos[index];
+                        return ListTile(
+                          title: Text("Litros: ${abastecimento.litros}"),
+                          subtitle: Text(
+                            "Km: ${abastecimento.km}\nData: ${abastecimento.data.toString()}",
+                          ),
+                        );
+                      },
+                    );
+                  },
+                )
+              else
+                const Text("Selecione um carro para ver o histórico de abastecimentos."),
             ],
           ),
         ),
